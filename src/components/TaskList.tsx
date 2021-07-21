@@ -1,29 +1,43 @@
-import { useState } from 'react'
+import { useState } from "react";
 
-import '../styles/tasklist.scss'
+import "../styles/tasklist.scss";
 
-import { FiTrash, FiCheckSquare } from 'react-icons/fi'
+import { FiTrash, FiCheckSquare } from "react-icons/fi";
 
-interface Task {
-  id: number;
-  title: string;
-  isComplete: boolean;
-}
+import { randomUuid } from "../utils";
+import { TaskItem } from "shared/types";
+
+import { useForm } from "react-hook-form";
 
 export function TaskList() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm();
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
 
-  function handleCreateNewTask() {
+  const handleCreateNewTask = (data) => {
     // Crie uma nova task com um id random, não permita criar caso o título seja vazio.
+    setTasks([
+      ...tasks,
+      { title: data.task, id: randomUuid(), isComplete: false },
+    ]);
+  };
+
+  function handleToggleTaskCompletion(id: string) {
+    const taskComple = tasks.map((task) =>
+      task.id === id ? { ...task, isComplete: !task.isComplete } : task
+    );
+
+    setTasks(taskComple);
   }
 
-  function handleToggleTaskCompletion(id: number) {
-    // Altere entre `true` ou `false` o campo `isComplete` de uma task com dado ID
-  }
+  function handleRemoveTask(id: string) {
+    const newTaks = tasks.filter((task) => task.id !== id);
 
-  function handleRemoveTask(id: number) {
-    // Remova uma task da listagem pelo ID
+    setTasks(newTaks);
   }
 
   return (
@@ -31,26 +45,31 @@ export function TaskList() {
       <header>
         <h2>Minhas tasks</h2>
 
-        <div className="input-group">
-          <input 
-            type="text" 
-            placeholder="Adicionar novo todo" 
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            value={newTaskTitle}
+        <form
+          onSubmit={handleSubmit(handleCreateNewTask)}
+          className="input-group"
+        >
+          <input
+            type="text"
+            placeholder="Adicionar novo todo"
+            {...register("task", { required: true })}
           />
-          <button type="submit" data-testid="add-task-button" onClick={handleCreateNewTask}>
-            <FiCheckSquare size={16} color="#fff"/>
+          <button type="submit" data-testid="add-task-button">
+            <FiCheckSquare size={16} color="#fff" />
           </button>
-        </div>
+        </form>
       </header>
 
       <main>
         <ul>
-          {tasks.map(task => (
+          {tasks?.map((task) => (
             <li key={task.id}>
-              <div className={task.isComplete ? 'completed' : ''} data-testid="task" >
+              <div
+                className={task.isComplete ? "completed" : ""}
+                data-testid="task"
+              >
                 <label className="checkbox-container">
-                  <input 
+                  <input
                     type="checkbox"
                     readOnly
                     checked={task.isComplete}
@@ -61,14 +80,17 @@ export function TaskList() {
                 <p>{task.title}</p>
               </div>
 
-              <button type="button" data-testid="remove-task-button" onClick={() => handleRemoveTask(task.id)}>
-                <FiTrash size={16}/>
+              <button
+                type="button"
+                data-testid="remove-task-button"
+                onClick={() => handleRemoveTask(task.id)}
+              >
+                <FiTrash size={16} />
               </button>
             </li>
           ))}
-          
         </ul>
       </main>
     </section>
-  )
+  );
 }
