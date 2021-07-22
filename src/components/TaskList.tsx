@@ -4,40 +4,49 @@ import "../styles/tasklist.scss";
 
 import { FiTrash, FiCheckSquare } from "react-icons/fi";
 
-import { randomUuid } from "../utils";
-import { TaskItem } from "shared/types";
-
-import { useForm } from "react-hook-form";
+interface Task {
+  id: number;
+  title: string;
+  isComplete: boolean;
+}
 
 export function TaskList() {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm();
-  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
 
-  const handleCreateNewTask = (data) => {
+  function handleCreateNewTask() {
     // Crie uma nova task com um id random, não permita criar caso o título seja vazio.
-    setTasks([
-      ...tasks,
-      { title: data.task, id: randomUuid(), isComplete: false },
-    ]);
-  };
-
-  function handleToggleTaskCompletion(id: string) {
-    const taskComple = tasks.map((task) =>
-      task.id === id ? { ...task, isComplete: !task.isComplete } : task
-    );
-
-    setTasks(taskComple);
+    if (newTaskTitle) {
+      setTasks([
+        ...tasks,
+        {
+          id: Math.floor(Math.random() * 1000),
+          title: newTaskTitle,
+          isComplete: false,
+        },
+      ]);
+    }
   }
 
-  function handleRemoveTask(id: string) {
-    const newTaks = tasks.filter((task) => task.id !== id);
+  function handleToggleTaskCompletion(id: number) {
+    // Altere entre `true` ou `false` o campo `isComplete` de uma task com dado ID]
 
-    setTasks(newTaks);
+    const updatedTasks = tasks.map((task) =>
+      task.id === id
+        ? {
+            ...task,
+            isComplete: !task.isComplete,
+          }
+        : task
+    );
+
+    setTasks(updatedTasks);
+  }
+
+  function handleRemoveTask(id: number) {
+    // Remova uma task da listagem pelo ID
+
+    setTasks(tasks.filter((value) => value.id !== id));
   }
 
   return (
@@ -45,24 +54,26 @@ export function TaskList() {
       <header>
         <h2>Minhas tasks</h2>
 
-        <form
-          onSubmit={handleSubmit(handleCreateNewTask)}
-          className="input-group"
-        >
+        <div className="input-group">
           <input
             type="text"
             placeholder="Adicionar novo todo"
-            {...register("task", { required: true })}
+            onChange={(e) => setNewTaskTitle(e.target.value)}
+            value={newTaskTitle}
           />
-          <button type="submit" data-testid="add-task-button">
+          <button
+            type="submit"
+            data-testid="add-task-button"
+            onClick={handleCreateNewTask}
+          >
             <FiCheckSquare size={16} color="#fff" />
           </button>
-        </form>
+        </div>
       </header>
 
       <main>
         <ul>
-          {tasks?.map((task) => (
+          {tasks.map((task) => (
             <li key={task.id}>
               <div
                 className={task.isComplete ? "completed" : ""}
